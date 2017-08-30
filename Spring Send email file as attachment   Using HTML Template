@@ -150,18 +150,9 @@
   
   //MailMail Class
   
-  
-  
   public class MailMail{  
-
-       
     public static void sendMail(final String from, final String to,final String subject,final String msg,File file1) {  
-    	
-    	
-    
-		
-
-		Properties props = System.getProperties();
+    	Properties props = System.getProperties();
 		props.put("mail.smtp.starttls.enable", "true"); 
 		props.put("mail.smtp.host", "*******");//smtp
 		props.put("mail.smtp.user", "*******");//email
@@ -171,18 +162,11 @@
 
 		Session session = Session.getInstance(props, null);
 		MimeMessage message = new MimeMessage(session);
-
-	
-
 		// Create the email addresses involved
 		try {
 		
-			
 			message.setSubject(subject);
-			
-			
 			message.addRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-
 			// Create a multi-part to combine the parts
 			Multipart multipart = new MimeMultipart("alternative");
 
