@@ -1,1 +1,239 @@
 
+
+//Spring Contoller Code
+@RequestMapping(value = "/updateSettlement", method = RequestMethod.POST)
+	public String updateSettelMerchantTrnasaction(Locale locale, Model model,
+			@ModelAttribute("settlement") MerchantSettelTransactionDetailMaster mcMaster, HttpServletRequest request,
+			HttpServletResponse response) {
+		
+		try {
+		int adminid = RedirectClass.MyRedirect(request, response);
+		if (adminid != 0) {
+			String merchantmobile=request.getParameter("contact_no");
+		 
+				mcMaster.setPayment_settelment_mode(mcMaster.getPayment_settelment_mode());;
+				mcMaster.setSettelment_amount( mcMaster.getSettelment_amount().replace(",", ""));
+				mcMaster.setCut_amount(mcMaster.getCut_amount().replace(",", ""));
+				mcMaster.setTotal_amount(mcMaster.getTotal_amount().replace(",", ""));
+				mcMaster.setAdmin_id(adminid);
+				mcMaster.setSettelment_merchant_id(mcMaster.getSettelment_merchant_id());
+				mcMaster.setSettelment_date(mcMaster.getSettelment_date());
+				mcMaster.setSettelment_status("Paid");
+			
+				String Amount= round(mcMaster.getTotal_amount(),2);
+				String cut= round(mcMaster.getCut_amount(),2);
+				String samount= round(mcMaster.getSettelment_amount(),2);
+				
+				Calendar today = Calendar.getInstance();
+				today.set(Calendar.HOUR_OF_DAY, 0);
+				    // "calculate" the start date of the week 
+				    Calendar first = (Calendar) today.clone();
+				    first.add(Calendar.DAY_OF_WEEK, 
+				              first.getFirstDayOfWeek() - first.get(Calendar.DAY_OF_WEEK));
+				 
+				    // and add six days to the end date 
+				    Calendar last = (Calendar) first.clone();
+				    last.add(Calendar.DAY_OF_YEAR, 7);
+				    
+				    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+				    
+				 //   System.out.println(df.format(first.getTime()) + " -> " + df.format(last.getTime()));
+				
+				
+			
+				MerchantSettelTransactionDetailMaster  msettlement=  adminService.addMerchantSettelmentRecord(mcMaster);
+				boolean result = adminService.settlementUpdateTransaction(mcMaster.getSettelment_merchant_id(),msettlement.getSettelment_id());
+				
+			      if(result==true) {
+			      try{
+			    	  CommanDTO merchantinfo=adminService.getmerchantDetailsBYId(mcMaster.getSettelment_merchant_id());
+			    	  List<CommanDTO> tlist=adminService.getpaidtransationThisWeek(mcMaster.getSettelment_merchant_id(),msettlement.getSettelment_id());
+			    	   String tr=null;
+			    	 for(CommanDTO t:tlist){ 
+			    		 System.out.println(t.getTrans_id());
+			    		 
+			    		   tr+="<tr style='padding-bottom: 2em;'><td valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'>"+t.getTrans_id()+"</td>"
+			    		  		+"<td valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'>"+t.getCustomer_firstname()+"</td>"
+			    		  		+"<td valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'>"+t.getCreate_date()+"</td>"
+			    		  		+"<td valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'>"+t.getDebit_amount()+"</td></tr>";
+			    		  
+			    	  }
+			             File fl=new File("./filename.pdf");
+			              Document document = new Document(PageSize.LETTER);
+			              PdfWriter pdfWriter = PdfWriter.getInstance(document, new FileOutputStream(fl));
+			               document.open();
+			               document.addAuthor("Real Gagnon");
+			               document.addCreator("Real's HowTo");
+			               document.addSubject("Thanks for your support");
+			               document.addCreationDate();
+			               document.addTitle("Please read this");
+
+			               XMLWorkerHelper worker = XMLWorkerHelper.getInstance();
+			               String str="<html> <head> <title>hi</title> </head> <body> "
+			              		+ "<table bgcolor='#E8E8E8' width='100%' border='0' cellspacing='0' cellpadding='0'> <tbody> <tr> <td> <table width='100%' border='0' align='center' cellpadding='0' cellspacing='0' style= 'border-top:10px solid #e8e8e8;border-bottom:10px solid #e8e8e8'> <tbody> <tr> <td style= 'border-bottom:10px solid #e8e8e8;padding-left:5px;padding-right:5px'> <table width='100%' border='0' cellspacing='0' cellpadding='0'> <tbody> <tr> <td colspan=\"3\" style='background:#ffffff;width:640px'><img width='50%' height='50%' src= 'https://s3.ap-south-1.amazonaws.com/paylatr-images/user-img/eec04a5e-b4e0-4a01-a890-1b30907ddccf.jpg' width='250' border='0' class='CToWUd'/></td> </tr> <tr> <td colspan=\"3\" style='background:#ffffff;width:640px' align='center'><h2>Settlement Invoice This Week</h2></td>"
+			              		+ " </tr> <tr><td colspan=\"3\" style='background:#ffffff;width:640px' align='right'>"
+			              		+ "<h4>Settlement Date:"+mcMaster.getSettelment_date()+"</h4></td> </tr>"
+			              		+ "<tr><td colspan=\"3\" style='background:#ffffff;width:'640px' align='center'>"
+					             + "<h4>Settlement Id:"+msettlement.getSettelment_id()+"</h4></td> </tr>"
+			              		+ " <tr> <td style='background:#ffffff;width:640px' align='left'>"
+			              		+ "<h4> Name:"+merchantinfo.getMerchant_name()+"</h4></td> <td style='background:#ffffff;width:640px' align='left'>"
+			              		+ "<h4>Mobile No:"+merchantinfo.getContact_Mobile()+"</h4></td> <td style='background:#ffffff;width:640px' align='left'>"
+			              		+ "<h4>Address:"+merchantinfo.getAddress1()+"</h4></td> </tr> <tr> <td style='background:#ffffff;width:640px' align='left'>"
+			              		+ "<h4>Bank :"+merchantinfo.getBank_name()+"</h4></td> "
+			              				+ "<td style='background:#ffffff;width:640px' align='left'>"
+			              		+ "<h4>A/C No:"+merchantinfo.getAccount_no()+"</h4></td> <td style='background:#ffffff;width:640px' align='left'>"
+			              		+ "<h4>IFSC:"+merchantinfo.getIfsc_code()+"</h4></td> </tr> "
+			              				+ "<tr><td style='background:#ffffff;width:640px' align='left'><h4>Total Amoun:"+Amount+"</h4></td>"
+			              				+ "<td style='background:#ffffff;width:640px' align='left'><h4>Cut Amount:"+cut+"</h4></td>"
+			              				+ "<td style='background:#ffffff;width:640px' align='left'><h4>Settlement Amount:"+samount+"</h4></td></tr>"
+			              			
+			              				+ "</tbody> </table>"
+			              	
+			              		+ " </td> </tr> <tr> <td width='640' valign='top' align='center' style= 'border-bottom:10px solid #e8e8e8;padding-left:5px;padding-right:5px'> <table width='100%' cellspacing='0' cellpadding='0' border='0'> <tbody> <tr> <td width='640' valign='top' align='center' style= 'padding-top:0px;padding-bottom:0px'> "
+			              		+ "<table width='100%' height='500px' cellspacing='2' cellpadding='2' border='0'> "
+			              		+ "<tbody>  <tr>"
+			              		
+			              		+ " <th width='10%' valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px;'> "
+			              		+ "<b> Txn.Id</b></th>"
+			              		+ " <th width='30%' valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'> "
+			              		+ "<b>Customer Name</b></th> <th width='40%' valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'> "
+			              		+ "<b>Date</b></th> <th width='20%' valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'> "
+			              		+ "<b> Amount</b></th> </tr> "+tr+""
+			              		
+			              		+ "<tr> <th colspan=\"2\" width='10%' valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'> "
+			              		+ "</th><th><b>Total  Amount</b></th> "
+			              		+ "<td valign='top' align='left' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#333;line-height:20px;padding-top:15px;padding-left:30px;padding-bottom:20px;padding-right:30px'><b>"+Amount+"</b></td> </tr> "
+			              				
+			              				+ " </tbody> </table> </td> </tr> </tbody> </table> </td> </tr> <tr> <td width='640' align='center' valign='top' style= 'border-bottom:10px solid #e8e8e8;padding-left:5px;padding-right:5px'> <table width='100%' border='0' cellspacing='0' cellpadding='0'> <tbody> <tr> <td align='left' valign='top' style= 'background:#fff;font-family:Verdana,Geneva,sans-serif;font-size:14px;font-weight:normal;color:#000;line-height:20px;padding-left:30px;padding-right:30px;padding-top:15px;padding-bottom:15px'>  <strong style='font-size:12px'><br></br></strong></td> </tr> </tbody> </table> </td> </tr> <tr> <td width='640' align='center' valign='top' style= 'padding-left:5px;padding-right:5px'></td> </tr> </tbody> </table> </td> </tr> </tbody> </table> </body> </html> ";
+			               
+			               worker.parseXHtml(pdfWriter, document, new StringReader(str));
+			               document.close();
+			                  System.out.println("Done.");
+			             String sender="contact@paylatr.com";//write here sender gmail id  
+			             String receiver=(String) merchantinfo.getContact_email() ;///send email merchant email id  
+			             
+			             String subject="Settlement Invoice";
+			             String mes="Dear Merchant,"+merchantinfo.getMerchant_name()+"\n\n\n"
+			 					+ "Your settlement amount details from "+df.format(first.getTime())+" To  "+df.format(last.getTime())+" are enclosed in the pdf below.\n"
+			 					+ "If you face any issues related to using Paylatr portal,\n"
+			 					+ " please contact our support team.\n \n "
+			 					+ "Note - This is a system generated email."
+			 					+ " Please do not reply to this email.";
+			      
+			            sendMail(sender,receiver,subject,mes,new File("./filename.pdf"));  
+			                
+			           
+						System.out.println("success");  
+			        
+			           
+			      }
+			      
+			      catch(Exception e)
+			      {
+			          System.out.println("exxxx:"+e);
+			      }
+			   
+			      }
+			
+		}}
+		catch (Exception e) {
+			e.printStackTrace();
+			return "redirect:settlements?msg=1";
+		}
+		return "redirect:settlements?msg=1";
+	}
+  
+  
+  
+  
+  
+  
+  //Email Class
+  
+  
+  
+  public class MailMail{  
+
+       
+    public static void sendMail(final String from, final String to,final String subject,final String msg,File file1) {  
+    	
+    	
+    
+		
+
+		Properties props = System.getProperties();
+		props.put("mail.smtp.starttls.enable", "true"); 
+		props.put("mail.smtp.host", "*******");//smtp
+		props.put("mail.smtp.user", "*******");//email
+		props.put("mail.smtp.password", "*******");//pass
+		props.put("mail.smtp.port", "587");//port
+		props.put("mail.smtp.auth", "true"); //athu
+
+		Session session = Session.getInstance(props, null);
+		MimeMessage message = new MimeMessage(session);
+
+	
+
+		// Create the email addresses involved
+		try {
+		
+			
+			message.setSubject(subject);
+			
+			
+			message.addRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+
+			// Create a multi-part to combine the parts
+			Multipart multipart = new MimeMultipart("alternative");
+
+			// Create your text message part
+			BodyPart messageBodyPart = new MimeBodyPart();
+			messageBodyPart.setText("some text to send");
+
+			// Add the text part to the multipart
+			multipart.addBodyPart(messageBodyPart);
+
+			// Create the html part
+			messageBodyPart = new MimeBodyPart();
+			//String htmlMessage = mes;
+			//messageBodyPart.setContent(htmlMessage, "text/html");
+
+			// Add html part to multi part
+			multipart.addBodyPart(messageBodyPart);
+
+			// Associate multi-part with message
+			message.setContent(multipart);
+
+			// Send message
+			Transport transport = session.getTransport("smtp");
+			transport.connect("smtp", "email", "pass");//put smpt ,email ,pass
+			System.out.println("Transport: " + transport.toString());
+			  
+			MimeMessageHelper helper = new MimeMessageHelper(message, true);  
+		        helper.setFrom(from);  
+		        helper.setTo(to);  
+		        helper.setSubject(subject);  
+		        helper.setText(msg);  
+			   FileSystemResource file = new FileSystemResource(file1);  
+		        helper.addAttachment("Settement Invoice.pdf", file);//image will be sent by this name  
+		  
+			transport.sendMessage(message, message.getAllRecipients());
+
+		} catch (AddressException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MessagingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return;
+    }
+  
+  
+  
+  
+  
+  
+  
+	
